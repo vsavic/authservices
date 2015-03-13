@@ -14,6 +14,7 @@ using System.Xml;
 using System.IO;
 using Kentor.AuthServices.Internal;
 using Kentor.AuthServices.Saml2P;
+using System.Deployment.Internal.CodeSigning;
 
 namespace Kentor.AuthServices.Tests.Saml2P
 {
@@ -208,6 +209,38 @@ namespace Kentor.AuthServices.Tests.Saml2P
             var signedResponse = string.Format(response, signedAssertion);
 
             Action a = () => Saml2Response.Read(signedResponse).GetClaims(Options.FromConfiguration);
+            a.ShouldNotThrow();
+        }
+
+
+        [TestMethod]
+        public void Saml2Response_GetClaims_CorrectSignedSingleAssertionWithKeyInfoInResponseMessage()
+        {
+            var RsaSha256Namespace = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
+            CryptoConfig.AddAlgorithm( typeof( RSAPKCS1SHA256SignatureDescription ), RsaSha256Namespace );
+
+            var response =
+            @"<saml2p:Response xmlns:saml2p=""urn:oasis:names:tc:SAML:2.0:protocol""
+            xmlns:saml2=""urn:oasis:names:tc:SAML:2.0:assertion""
+            ID = ""Saml2Response_GetClaims_TrueOnCorrectSignedSingleAssertionInResponseMessage"" Version=""2.0"" IssueInstant=""2013-01-01T00:00:00Z"">
+                <saml2:Issuer>https://idp.example.com</saml2:Issuer>
+                <saml2p:Status>
+                    <saml2p:StatusCode Value=""urn:oasis:names:tc:SAML:2.0:status:Success"" />
+                </saml2p:Status>
+                {0}
+            </saml2p:Response>";
+
+            var assertion = new Saml2Assertion( new Saml2NameIdentifier( "https://idp.example.com" ) );
+            assertion.Subject = new Saml2Subject( new Saml2NameIdentifier( "SomeUser" ) );
+            assertion.Subject.SubjectConfirmations.Add( new Saml2SubjectConfirmation( new Uri( "urn:oasis:names:tc:SAML:2.0:cm:bearer" ) ) );
+            assertion.Conditions = new Saml2Conditions() { NotOnOrAfter = new DateTime( 2100, 1, 1 ) };
+
+            var signedAssertion = SignedXmlHelper.SignAssertion( assertion );
+            var signedResponse = string.Format( response, signedAssertion );
+
+            File.WriteAllText(@"C:\dev\wif_sha256.xml", signedResponse);
+
+            Action a = () => Saml2Response.Read( signedResponse ).GetClaims( Options.FromConfiguration );
             a.ShouldNotThrow();
         }
 
