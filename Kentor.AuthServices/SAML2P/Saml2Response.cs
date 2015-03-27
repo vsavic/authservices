@@ -266,7 +266,8 @@ namespace Kentor.AuthServices.Saml2P
                     allAssertionElementNodes =
                         XmlDocument.DocumentElement.ChildNodes.Cast<XmlNode>()
                         .Where(node => node.NodeType == XmlNodeType.Element).Cast<XmlElement>()
-                        .Where(xe => xe.LocalName == "Assertion" && xe.NamespaceURI == Saml2Namespaces.Saml2Name);
+                        .Where(xe => (xe.LocalName == "Assertion" || xe.LocalName == "EncryptedAssertion")
+                            && xe.NamespaceURI == Saml2Namespaces.Saml2Name);
                 }
 
                 return allAssertionElementNodes;
@@ -373,6 +374,10 @@ namespace Kentor.AuthServices.Saml2P
         {
             var xmlDocument = new XmlDocument { PreserveWhitespace = true };
             xmlDocument.LoadXml(signedRootElement.OuterXml);
+
+            //TODO: mark this assertion for later validation /////////////////////////////////////////
+            if (signedRootElement.Name == "EncryptedAssertion") return;
+            //TODO: ////////////////////////////////////////////////////////////////////////
 
             var signature = xmlDocument.DocumentElement["Signature", SignedXml.XmlDsigNamespaceUrl];
             if (signature == null)

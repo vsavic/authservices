@@ -1395,5 +1395,16 @@ namespace Kentor.AuthServices.Tests.Saml2P
                 .WithMessage( "Signature validation failed on SAML response or contained assertion." );
 
         }
+
+        [TestMethod]
+        public void Saml2Response_GetClaims_EncryptedAssertion_Reads()
+        {
+            //TODO: create the assertion for testing
+            var response = File.ReadAllText(@"C:\dev\adfs_encrypted.xml");
+
+            var r = Saml2Response.Read(response).GetClaims(Options.FromConfiguration);
+            r.Count().Should().Be(1);
+            
+        }
     }
 }

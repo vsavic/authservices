@@ -36,11 +36,15 @@ namespace Kentor.AuthServices.Saml2P
             audienceRestriction.AllowedAudienceUris.Add(
                 new Uri(spOptions.EntityId.Id));
 
+            //TODO: do not depend on WIF config sections and System.Web
+            var WIF = FederatedAuthentication.FederationConfiguration.IdentityConfiguration.SecurityTokenHandlers;
+
             Configuration = new SecurityTokenHandlerConfiguration
             {
                 IssuerNameRegistry = new ReturnRequestedIssuerNameRegistry(),
                 AudienceRestriction = audienceRestriction,
-                SaveBootstrapContext = spOptions.SystemIdentityModelIdentityConfiguration.SaveBootstrapContext
+                SaveBootstrapContext = spOptions.SystemIdentityModelIdentityConfiguration.SaveBootstrapContext,
+                ServiceTokenResolver = WIF.Configuration.ServiceTokenResolver
             };
         }
 
